@@ -1,0 +1,249 @@
+---
+title: "2019-nCoV扩散：SIDR模型"
+author: "吴翔"
+date: "`r Sys.Date()`"
+output: html_document
+---
+
+<style type="text/css">
+body{ /* Normal  */
+      font-size: 16px;
+  }
+td {  /* Table  */
+  font-size: 14px;
+}
+h1.title {
+  font-size: 36px;
+  color: DarkRed;
+}
+h1 { /* Header 1 */
+  font-size: 32px;
+  color: DarkBlue;
+}
+h2 { /* Header 2 */
+    font-size: 24px;
+  color: DarkBlue;
+}
+h3 { /* Header 3 */
+  font-size: 20px;
+  font-family: "Times New Roman", Times, serif;
+  color: DarkBlue;
+}
+code.r{ /* Code block */
+    font-size: 14px;
+}
+pre { /* Code block - determines code spacing between lines */
+    font-size: 14px;
+}
+</style>
+
+```{r setup, include = FALSE}
+
+knitr::opts_chunk$set(echo = TRUE, warning = F, message = F)
+
+```
+
+## 事件背景
+
+此次2019-nCoV肺炎时间，起始于2019年12月8日，迄今45天。武汉常住人口1100万，常驻流动人口287万。
+
+使用数学模型刻画了此次疫情的传播，得到如下结论：
+
+1. <p style="color:red">2019-nCoV由于潜伏期长，其危害十分严重。假定潜伏期平均为7天，那么真实感染人数大约是报道出来感染人数的2.5倍。</p>
+
+2. <p style="color:red">目前大家严重低估了2019-nCoV的传染率，其真实传染率可能是SARS的1.5倍。</p>
+
+具体请参阅以下文档，欢迎各位同仁讨论。
+
+个人希望以上两条结论有助于大家理解事态的严重性，从而更好配合公共卫生体系应对当前疫情。天佑武汉！
+
+## SIR模型及参数
+
+首先考虑SIR模型。该模型将人群分为：尚未感染人群（susceptible）、感染人群（infectious）和治愈人群（recovered）。
+
+尚未感染的人群，其变化率是：
+$$
+dS / dt = - \beta \cdot S \cdot I
+$$
+感染人群的变化率是：
+$$
+dI / dt = \beta \cdot S \cdot I - \gamma \cdot I
+$$
+治愈人群的变化率是：
+$$
+dR / dt = \gamma \cdot I
+$$
+参数$\beta$是每个宿主每天接触到的人数（记为$c$）和接触时感染概率（记为$p$）的乘积，亦即：$\beta = c \cdot p$。参数$\gamma$为治愈率，其倒数$D = 1 / \gamma$为平均治疗时间。
+
+```{r}
+rm(list = ls())
+suppressMessages(library(deSolve))
+suppressMessages(library(ggplot2))
+
+# basic SIR model
+sir <- function(time, state, parameters) {
+  with(as.list(c(state, parameters)), {
+    dS <- -beta * S * I
+    dI <- beta * S * I - gamma * I
+    dR <- gamma * I
+    return(list(c(dS, dI, dR)))
+  })
+}
+
+```
+
+根据[德国哥廷根大学于晓华教授提供的参数](https://weibo.com/u/1684992301?is_hot=1#_rnd1579701992368)，亦即$\beta = 0.2586$和$\gamma = 0.0821$求解模型，进而使用ggplot2绘制2019-nCoV的传播情况。
+
+```{r}
+# set parameter and solve the model
+init <- c(S = 1 - 1e-6, I = 1e-6,R = 0)
+parameters <- c(beta = 0.2586, gamma = 0.0821)
+times <- seq(0, 150, by = 1)
+out <- as.data.frame(ode(y = init, times = times, func = sir, parms = parameters))
+out$time <- times
+
+# plot the diffusion of 2019-nCoV
+ggplot(out, aes(x = time)) + 
+  geom_line(aes(y = S,colour="Susceptible")) +
+  geom_line(aes(y = I,colour="Infected")) + 
+  geom_line(aes(y = R,colour="Recovered")) + 
+  ylab(label="Proportions") + xlab(label="Time (days)") + 
+  scale_colour_manual("Compartments", breaks=c("Susceptible","Infected","Recovered"), values=c("blue","red","darkgreen")) +
+  ggtitle("SIR model for 2019-nCoV diffusion")
+
+```
+
+借助2003年SARS的参数，可以刻画此次2019-nCoV大体的传播情况。转折点在75天左右，亦即2020年2月20日左右达到高峰，然后逐渐得到控制。
+
+## SIDR模型：考虑潜伏期
+
+在SIR模型的基础上，考虑感染并处于潜伏期内的人群。因此SIIR模型将人群分为：尚未感染人群（susceptible）、感染并潜伏人群（infectious & incubated）、感染并发现且随即隔离人群（infectious & discovered）和治愈人群（recovered）。
+
+尚未感染的人群，其变化率是：
+$$
+dS / dt = - \beta \cdot S \cdot I
+$$
+感染并潜伏人群的变化率是：
+$$
+dI / dt = \beta \cdot S \cdot I - \alpha \cdot I
+$$
+感染并隔离人群的变化率是：
+$$
+dD / dt = \alpha \cdot I - \gamma \cdot D
+$$
+治愈人群的变化率是：
+$$
+dR / dt = \gamma \cdot D
+$$
+参数$\beta$是每个宿主每天接触到的人数（记为$c$）和接触时感染概率（记为$p$）的乘积，亦即：$\beta = c \cdot p$。参数$\gamma$为治愈率，其倒数$1 / \gamma$为平均治疗时间。参数$\alpha$为隔离率，由于平均潜伏时间为7天，因而可知$\alpha = 1/7$。
+
+
+```{r}
+# load packages
+rm(list = ls())
+
+# SIDR model
+sidr <- function(time, state, parameters) {
+  with(as.list(c(state, parameters)), {
+    dS <- -beta * S * I
+    dI <- beta * S * I - alpha * I
+    dD <- alpha * I - gamma * D
+    dR <- gamma * D
+	
+    return(list(c(dS, dI, dD, dR)))
+  })
+}
+
+# set parameter and solve the model
+init <- c(S = 1 - 1e-6, I = 1e-6, D = 0, R = 0)
+parameters <- c(beta = 0.2586, gamma = 0.0821, alpha = 0.1428)
+times <- seq(0, 360, by = 1)
+out <- as.data.frame(ode(y = init, times = times, func = sidr, parms = parameters))
+out$time <- times
+
+```
+
+使用ggplot2绘制2019-nCoV的传播情况。
+
+```{r}
+
+# write a function to plot the diffusion of 2019-nCoV
+plot.sidr <- function(out) {
+  ggplot(out, aes(x = time)) + 
+  geom_line(aes(y = S,colour="Susceptible")) +
+  geom_line(aes(y = I,colour="Infected & Incubated")) + 
+  geom_line(aes(y = D,colour="Discovered & Isolated")) + 
+  geom_line(aes(y = R,colour="Recovered")) + 
+  ylab(label="Proportions") + xlab(label="Time (days)") + 
+  scale_colour_manual("Compartments", breaks=c("Susceptible","Infected & Incubated","Discovered & Isolated","Recovered"), values=c("blue","orange","darkgreen","red")) +
+  ggtitle("SIDR model for 2019-nCoV diffusion")
+}
+
+# plot the data
+plot.sidr(out)
+
+```
+
+借助2003年SARS的参数，可以刻画此次2019-nCoV大体的传播情况。转折点在120天左右，亦即2020年4月1日左右达到高峰，然后逐渐得到控制。
+
+当然，这一数据并不准确。不过，参数并不妨碍我们回答最关键的问题：
+
+- 到底有多少尚未报道的感染者？
+
+```{r}
+
+# calculate total infectious
+out$TI <- out$I + out$D
+
+# plot the diffusion of 2019-nCoV
+ggplot(out, aes(x = time)) + 
+  geom_line(aes(y = I,colour="Infected & Incubated")) + 
+  geom_line(aes(y = D,colour="Discovered & Isolated")) + 
+  geom_line(aes(y = TI,colour="Total Infected")) + 
+  ylab(label="Proportions") + xlab(label="Time (days)") + 
+  scale_colour_manual("Compartments", breaks=c("Infected & Incubated","Discovered & Isolated","Total Infected"), values=c("blue","darkgreen","red")) +
+  ggtitle("SIDR model for 2019-nCoV diffusion")
+
+```
+
+更直接地，我们给出总感染者$TI$和被发现的感染者$D$的比例，
+
+```{r}
+
+# plot the diffusion of 2019-nCoV
+ggplot(out, aes(x = time)) + 
+  geom_line(aes(y = TI / D,colour="Infected & Incubated"))
+
+```
+
+可以看到，真实感染者的数量，是报道出来感染者数量的2.5倍。
+
+## SIDR模型应用：传染率如何？
+
+目前的SIDR模型使用的是SARS的传染率，亦即$\beta = \beta_{SARS} = 0.2586$。那么，这一传染率是被高估了，还是被低估了呢？
+
+我们考虑两个简单的情形：
+
+- 传染率被高估了，真实传染率$\beta = 2/3 \times \beta_{SARS}$
+- 传染率被低估了，真实传染率$\beta = 3/2 \times \beta_{SARS}$
+
+```{r}
+
+# overestimated
+parameters <- c(beta = 0.2586 * 2 / 3, gamma = 0.0821, alpha = 0.1428)
+times <- seq(0, 360, by = 1)
+out <- as.data.frame(ode(y = init, times = times, func = sidr, parms = parameters))
+out$time <- times
+plot.sidr(out)
+# underestimated
+parameters <- c(beta = 0.2586 * 3 / 2, gamma = 0.0821, alpha = 0.1428)
+times <- seq(0, 360, by = 1)
+out <- as.data.frame(ode(y = init, times = times, func = sidr, parms = parameters))
+out$time <- times
+plot.sidr(out)
+
+```
+
+从结果来看，传染率越低，疫情蔓延越久；反之，传染率越高，疫情蔓延越快。
+
+显然，我们低估了2019-nCoV的传染率。更可能的情况是，2019-nCoV的传染率是SARS的1.5倍。

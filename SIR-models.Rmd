@@ -1,6 +1,6 @@
 ---
 title: "2019-nCoV扩散：SIDR模型"
-author: "吴翔"
+author: ""
 date: "`r Sys.Date()`"
 output: html_document
 ---
@@ -49,7 +49,7 @@ knitr::opts_chunk$set(echo = TRUE, warning = F, message = F)
 
 使用数学模型刻画了此次疫情的传播，得到如下结论：
 
-1. <p style="color:red">2019-nCoV由于潜伏期长，其危害十分严重。假定潜伏期平均为7天，那么真实感染人数大约是报道出来感染人数的2.5倍。</p>
+1. <p style="color:red">2019-nCoV由于潜伏期长，其危害十分严重。假定潜伏期平均为7天，那么真实感染人数大约是报道出来感染人数的3倍。</p>
 
 2. <p style="color:red">目前大家严重低估了2019-nCoV的传染率，其真实传染率可能是SARS的1.5倍。</p>
 
@@ -212,7 +212,9 @@ ggplot(out, aes(x = time)) +
 
 # plot the diffusion of 2019-nCoV
 ggplot(out, aes(x = time)) + 
-  geom_line(aes(y = TI / D,colour="Infected & Incubated"))
+  geom_line(aes(y = TI / D,colour="Total Infected / Discovered")) + 
+  xlab(label="Time (days)")
+  
 
 ```
 
@@ -247,3 +249,20 @@ plot.sidr(out)
 从结果来看，传染率越低，疫情蔓延越久；反之，传染率越高，疫情蔓延越快。
 
 显然，我们低估了2019-nCoV的传染率。更可能的情况是，2019-nCoV的传染率是SARS的1.5倍。
+
+## SIDR模型应用：真实感染人数到底有多少？
+
+我们更新传染率，再次给出真实感染人数和报道出来感染人数的比值，结果如下。
+
+```{r}
+
+# calculate total infectious
+out$TI <- out$I + out$D
+
+# plot the diffusion of 2019-nCoV
+ggplot(out, aes(x = time)) + 
+  geom_line(aes(y = TI / D,colour="Total Infected / Discovered")) + 
+  xlab(label="Time (days)")
+```
+
+可以看到，在现阶段，真实感染者的数量，大约是报道出来感染者数量的3倍。

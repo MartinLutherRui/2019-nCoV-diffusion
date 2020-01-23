@@ -405,12 +405,41 @@ pre { /* Code block - determines code spacing between lines */
 </div>
 <div id="城际传播模型及参数" class="section level2">
 <h2>城际传播模型及参数</h2>
+<p>假设总体感染人数为<span class="math inline">\(N\)</span>，城际（例如武汉市外，湖北省外，或者中国境外）报告的病例数量为<span class="math inline">\(X\)</span>，而任意居民在城际被检测出感染的概率为<span class="math inline">\(p\)</span>，那么 <span class="math display">\[
+X = p \cdot N
+\]</span> 因此，我们可以根据城际报告的案例数，来推测整体感染的人数。</p>
+<p>假定武汉市每日人口流出量为<span class="math inline">\(n_{out}\)</span>，武汉市常住人口为<span class="math inline">\(n_{total}\)</span>，此次病毒的平均潜伏期为<span class="math inline">\(d\)</span>，那么 <span class="math display">\[
+p = \frac{n_{out}}{n_{total}} \cdot d
+\]</span> 由此，我们可以得到计算感染总人数的公式： <span class="math display">\[
+N = \frac{X}{p} = \frac{X \cdot n_{total}}{n_{out} \cdot d}
+\]</span></p>
+<p>我们首先撰写函数，然后计算估计值。</p>
+<pre class="r"><code># write a function
+numofinfectious &lt;- function(x, n.total = 1.1e7, n.out, d = 10) {
+    # estimate number of infectious
+    n &lt;- x * n.total / n.out / d
+    return(n)
+}</code></pre>
 </div>
 <div id="城际传播模型国际传播" class="section level2">
 <h2>城际传播模型：国际传播</h2>
+<p>截至2018年末，武汉市常住人口1108万，其中城镇常住人口890万，换言之可以取<span class="math inline">\(n_{total} = 11080000\)</span>。</p>
+<p>按照<a href="http://www.imperial.ac.uk/mrc-global-infectious-disease-analysis/news--wuhan-coronavirus/">MRC Centre for Global Infectious Disease Analysis</a>给出的参数，截止2020年1月18日为止，境外报告了7例感染者，亦即<span class="math inline">\(X = 7\)</span>。武汉国际航班每日出行人数为<span class="math inline">\(n_{out} = 3301\)</span>，疾病的平均潜伏日期（潜伏加上诊断时间）为<span class="math inline">\(d = 10\)</span>。</p>
+<pre class="r"><code># calculate the total number of infectious
+
+numofinfectious(x = 7, n.out = 3301)</code></pre>
+<pre><code>## [1] 2332.626</code></pre>
 </div>
 <div id="城际传播模型城际传播" class="section level2">
 <h2>城际传播模型：城际传播</h2>
+<p>类似地，我们可以使用国内交通客流量，从铁路系统流出武汉的人数，配合武汉市外各地的病例数量，来估算总体感染数量。</p>
+<p>根据<a href="http://www.whtv.com.cn/p/17571.html">这一新闻</a>，武汉春运40天预计共发送旅客1500万，大致估计每天40万流出。</p>
+<p>湖北省外的确诊人数约130例。</p>
+<pre class="r"><code># calculate the total number of infectious
+
+numofinfectious(x = 130, n.out = 4e5)</code></pre>
+<pre><code>## [1] 357.5</code></pre>
+<p>这一数据与使用境外出行数据得到的结论偏差很大，这也意味着，湖北省外真实感染人数也许是报告出来的7-10倍。</p>
 </div>
 
 

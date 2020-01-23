@@ -59,7 +59,9 @@ knitr::opts_chunk$set(echo = TRUE, warning = F, message = F)
 
 ## SIR模型及参数
 
-首先考虑SIR模型。该模型将人群分为：尚未感染人群（susceptible）、感染人群（infectious）和治愈人群（recovered）。
+首先考虑SIR模型。该模型将人群分为：尚未感染人群（susceptible）、感染人群（infectious）和治愈人群（recovered）。模型示意图如下。
+
+![SIR模型](Figures/SIR.png)
 
 尚未感染的人群，其变化率是：
 $$
@@ -117,7 +119,9 @@ ggplot(out, aes(x = time)) +
 
 ## SIDR模型：考虑潜伏期
 
-在SIR模型的基础上，考虑感染并处于潜伏期内的人群。因此SIIR模型将人群分为：尚未感染人群（susceptible）、感染并潜伏人群（infectious & incubated）、感染并发现且随即隔离人群（infectious & discovered）和治愈人群（recovered）。
+在SIR模型的基础上，考虑感染并处于潜伏期内的人群。因此SIIR模型将人群分为：尚未感染人群（susceptible）、感染并潜伏人群（infectious & incubated）、感染并发现且随即隔离人群（infectious & discovered）和治愈人群（recovered）。SIDR模型示意图如下：
+
+![SIDR模型](Figures/SIDR.png)
 
 尚未感染的人群，其变化率是：
 $$

@@ -11,7 +11,7 @@
 
 <meta name="author" content />
 
-<meta name="date" content="2020-01-23" />
+<meta name="date" content="2020-01-24" />
 
 <title>2019-nCoV扩散：城际传播模型</title>
 
@@ -364,7 +364,7 @@ summary {
 
 
 <h1 class="title toc-ignore">2019-nCoV扩散：城际传播模型</h1>
-<h4 class="date">2020-01-23</h4>
+<h4 class="date">2020-01-24</h4>
 
 </div>
 
@@ -424,22 +424,23 @@ numofinfectious &lt;- function(x, n.total = 1.1e7, n.out, d = 10) {
 <div id="城际传播模型国际传播" class="section level2">
 <h2>城际传播模型：国际传播</h2>
 <p>截至2018年末，武汉市常住人口1108万，其中城镇常住人口890万，换言之可以取<span class="math inline">\(n_{total} = 11080000\)</span>。</p>
-<p>按照<a href="http://www.imperial.ac.uk/mrc-global-infectious-disease-analysis/news--wuhan-coronavirus/">MRC Centre for Global Infectious Disease Analysis</a>给出的参数，截止2020年1月18日为止，境外报告了7例感染者，亦即<span class="math inline">\(X = 7\)</span>。武汉国际航班每日出行人数为<span class="math inline">\(n_{out} = 3301\)</span>，疾病的平均潜伏日期（潜伏加上诊断时间）为<span class="math inline">\(d = 10\)</span>。</p>
+<p>按照<a href="http://www.imperial.ac.uk/mrc-global-infectious-disease-analysis/news--wuhan-coronavirus/">MRC Centre for Global Infectious Disease Analysis</a>给出的参数，截止2020年1月24日晚上18:00为止，国外报告了12例感染者，亦即<span class="math inline">\(X = 12\)</span>；港澳台5例，因此境外总人数为<span class="math inline">\(X = 17\)</span>。武汉国际航班每日出行人数为<span class="math inline">\(n_{out} = 3301\)</span>，疾病的平均潜伏日期（潜伏加上诊断时间）为<span class="math inline">\(d = 10\)</span>。</p>
 <pre class="r"><code># calculate the total number of infectious
-
-numofinfectious(x = 7, n.out = 3301)</code></pre>
-<pre><code>## [1] 2332.626</code></pre>
+numofinfectious(x = 12, n.out = 3301)</code></pre>
+<pre><code>## [1] 3998.788</code></pre>
+<pre class="r"><code>numofinfectious(x = 17, n.out = 3301)</code></pre>
+<pre><code>## [1] 5664.95</code></pre>
 </div>
 <div id="城际传播模型城际传播" class="section level2">
 <h2>城际传播模型：城际传播</h2>
 <p>类似地，我们可以使用国内交通客流量，从铁路系统流出武汉的人数，配合武汉市外各地的病例数量，来估算总体感染数量。</p>
-<p>根据<a href="http://www.whtv.com.cn/p/17571.html">这一新闻</a>，武汉春运40天预计共发送旅客1500万，大致估计每天40万流出。</p>
-<p>湖北省外的确诊人数约130例。</p>
+<p>根据<a href="http://www.whtv.com.cn/p/17571.html">这一新闻</a>，武汉春运40天预计共发送旅客1500万。同时，结合武汉铁路的运输数据，武汉三大火车站每天流出29.6万人。因此，大致估计每天30万流出省外。</p>
+<p>截止2020年1月24日晚上18:00，湖北省外的确诊人数为887 - 549 = 338例。</p>
 <pre class="r"><code># calculate the total number of infectious
 
-numofinfectious(x = 130, n.out = 4e5)</code></pre>
-<pre><code>## [1] 357.5</code></pre>
-<p>这一数据与使用境外出行数据得到的结论偏差很大，这也意味着，湖北省外真实感染人数也许是报告出来的7-10倍。</p>
+numofinfectious(x = 338, n.out = 3e5)</code></pre>
+<pre><code>## [1] 1239.333</code></pre>
+<p>这一数据与使用境外出行数据得到的结论偏差很大，这也意味着，湖北省外真实感染人数应当也许是报告出来的3-5倍。换言之，目前省外感染人数约为1000 ~ 1600例。</p>
 </div>
 
 
